@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_dart_flutter_plugin_sample_app/presentation/view/chat_view.dart';
+
+import 'chat_web.dart';
 
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
@@ -63,7 +64,7 @@ class LoginView extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const ChatView()),
+                            MaterialPageRoute(builder: (context) => const ChatMessagesPage()),
                           );
                         },
                         style: ElevatedButton.styleFrom(

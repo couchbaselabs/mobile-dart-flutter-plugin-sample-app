@@ -1,7 +1,12 @@
+import 'package:cbl_flutter_multiplatform/cbl_flutter_multiplatform.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_dart_flutter_plugin_sample_app/presentation/view/login_view.dart';
+import 'package:mobile_dart_flutter_plugin_sample_app/login_view.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await CouchbaseLiteFlutter.init();
+
   runApp(const MyApp());
 }
 
@@ -17,7 +22,7 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.red,
         fontFamily: 'Roboto', colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.redAccent),
       ),
-      home:  LoginView(),
+      home:  const LoginView(),
     );
   }
 }
