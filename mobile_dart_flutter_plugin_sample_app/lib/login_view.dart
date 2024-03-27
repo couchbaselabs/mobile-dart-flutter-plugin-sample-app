@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_dart_flutter_plugin_sample_app/landing_view.dart';
 
-import 'chat_web.dart';
+import 'chat_mobile.dart' if (dart.library.html) 'chat_web.dart';
 
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -45,16 +54,18 @@ class LoginView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20.0),
-                      const TextField(
-                        decoration: InputDecoration(
+                      TextField(
+                        controller: usernameController,
+                        decoration: const InputDecoration(
                           hintText: 'Username',
                           icon: Icon(Icons.person),
                         ),
                       ),
                       const SizedBox(height: 20.0),
-                      const TextField(
+                      TextField(
+                        controller: passwordController,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Password',
                           icon: Icon(Icons.lock),
                         ),
@@ -64,12 +75,17 @@ class LoginView extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const ChatMessagesPage()),
+                            MaterialPageRoute(
+                                builder: (context) => LandingView(
+                                    username: usernameController.text,
+                                    password: passwordController.text)),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.secondary,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30.0),
                           ),

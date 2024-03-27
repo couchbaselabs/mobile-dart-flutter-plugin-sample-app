@@ -5,7 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ChatMessagesPage extends StatefulWidget {
-  const ChatMessagesPage({super.key});
+  const ChatMessagesPage(
+      {required this.channel,
+      required this.username,
+      required this.password,
+      super.key});
+
+  final String channel;
+  final String username;
+  final String password;
+
   @override
   State<ChatMessagesPage> createState() => _ChatMessagesPageState();
 }
@@ -22,9 +31,10 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
     _cblWebSocket.createCollection('message', 'chat');
 
     _cblWebSocket.connect(
+        channels: [widget.channel],
         url: 'ws://192.168.0.116:4984/examplechat',
-        username: 'bob',
-        password: '12345');
+        username: widget.username,
+        password: widget.password);
 
     _cblWebSocket.startListening((message) {
       if ((message != null || message != '') && message is String) {

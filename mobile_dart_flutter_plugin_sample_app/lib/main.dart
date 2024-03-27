@@ -18,11 +18,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme:ThemeData(
+      theme: ThemeData(
         primaryColor: Colors.red,
-        fontFamily: 'Roboto', colorScheme: ColorScheme.fromSwatch().copyWith(secondary: Colors.redAccent),
+        fontFamily: 'Roboto',
+        colorScheme:
+            ColorScheme.fromSwatch().copyWith(secondary: Colors.redAccent),
       ),
-      home:  const LoginView(),
+      home: const LoginView(),
     );
   }
 }

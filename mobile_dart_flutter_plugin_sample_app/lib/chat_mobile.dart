@@ -5,25 +5,28 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ChatMessagesPage extends StatefulWidget {
-  const ChatMessagesPage({super.key});
+  const ChatMessagesPage(
+      {required this.channel,
+      required this.username,
+      required this.password,
+      super.key});
+
+  final String channel;
+  final String username;
+  final String password;
 
   @override
   State<ChatMessagesPage> createState() => _ChatMessagesPageState();
 }
 
 class _ChatMessagesPageState extends State<ChatMessagesPage> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   Future<ChatMessageRepository> setup() async {
     late Database database;
     late Collection chatMessages;
     late Replicator replicator;
     late ChatMessageRepository chatMessageRepository;
 
-    database = await Database.openAsync('examplechat');
+    database = await Database.openAsync(widget.channel);
 
     chatMessages = await database.createCollection('message', 'chat');
 
@@ -40,10 +43,11 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
 
     config.continuous = true;
 
-    config.authenticator =
-        BasicAuthenticator(username: "bob", password: "12345");
+    config.authenticator = BasicAuthenticator(
+        username: widget.username, password: widget.password);
 
-    config.addCollection(chatMessages, CollectionConfiguration());
+    config.addCollection(
+        chatMessages, CollectionConfiguration(channels: [widget.channel]));
 
     replicator = await Replicator.create(config);
 
@@ -70,6 +74,7 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
           builder: (context, snapshot) => snapshot.data == null
               ? const Center(child: CircularProgressIndicator())
               : ChatMessagesPageMobile(
+                  channel: widget.channel,
                   repository: snapshot.data,
                 )),
     );
@@ -77,8 +82,10 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
 }
 
 class ChatMessagesPageMobile extends StatefulWidget {
-  const ChatMessagesPageMobile({this.repository, super.key});
+  const ChatMessagesPageMobile(
+      {required this.channel, this.repository, super.key});
   final ChatMessageRepository? repository;
+  final String channel;
 
   @override
   State<ChatMessagesPageMobile> createState() => _ChatMessagesPageMobileState();
@@ -106,6 +113,9 @@ class _ChatMessagesPageMobileState extends State<ChatMessagesPageMobile> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(
+          title: Text(widget.channel),
+        ),
         body: SafeArea(
           child: Column(children: [
             Expanded(
