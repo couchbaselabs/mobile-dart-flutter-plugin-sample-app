@@ -61,7 +61,7 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
 
     await replicator.start();
 
-    chatMessageRepository = ChatMessageRepository(database, chatMessages);
+    chatMessageRepository = ChatMessageRepository(database, chatMessages, widget.channel);
 
     return chatMessageRepository;
   }
@@ -243,15 +243,16 @@ extension DictionaryDocumentIdExt on DictionaryInterface {
 }
 
 class ChatMessageRepository {
-  ChatMessageRepository(this.database, this.collection);
+  ChatMessageRepository(this.database, this.collection, this.channel);
   final Database database;
   final Collection collection;
+  final String channel;
 
   Future<ChatMessage> createChatMessage(String message) async {
     final doc = MutableDocument({
       'type': 'chatMessage',
       'createdAt': DateTime.now(),
-      'userId': 'bob',
+      'userId': channel,
       'chatMessage': message,
     });
     await collection.saveDocument(doc);

@@ -81,6 +81,7 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
             ),
             const Divider(height: 0),
             _ChatMessageForm(
+              channel: widget.channel,
               onSubmit: (message) {},
               cblWebSocket: _cblWebSocket,
             )
@@ -114,9 +115,12 @@ class ChatMessageTile extends StatelessWidget {
 
 class _ChatMessageForm extends StatefulWidget {
   const _ChatMessageForm({
+    required this.channel,
     required this.cblWebSocket,
     required this.onSubmit,
   });
+
+  final String channel;
   final CblWebSocket cblWebSocket;
   final ValueChanged<String> onSubmit;
   @override
@@ -151,7 +155,7 @@ class _ChatMessageFormState extends State<_ChatMessageForm> {
       'type': 'chatMessage',
       'createdAt':
           DateFormat("yyyy-MM-ddTHH:mm:ss.SSSSSS").format(DateTime.now()),
-      'userId': 'bob',
+      'userId': widget.channel,
       'chatMessage': message,
     };
 
