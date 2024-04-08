@@ -20,21 +20,85 @@ class ChatMessagesPage extends StatefulWidget {
 }
 
 class _ChatMessagesPageState extends State<ChatMessagesPage> {
-  Future<ChatMessageRepository> setup() async {
-    late Database database;
-    late Collection chatMessages;
-    late Replicator replicator;
-    late ChatMessageRepository chatMessageRepository;
+  late Database database;
+  late Collection chatMessages;
+  late Replicator replicator;
+  late ChatMessageRepository chatMessageRepository;
+  late ListenerToken token;
 
+  Future<ChatMessageRepository> setup() async {
+    // Req 13
     database = await Database.openAsync(widget.channel);
 
+    // Req 12
+    // await Database.exists('name');
+    
+    // Req 17
+    //Database.copy(from: 'from', name: 'name');
+
+    // Req 5 
+    // await database.delete();
+
+    // Req 7
+    final query = await Query.fromN1ql(database,
+    r'''
+    SELECT *, META().id AS docId
+    FROM _
+    WHERE type = 'chatMessage'
+    ''',);
+
+    // Req 8
+    query.setParameters(Parameters({'type': 'chatMessage'}));
+
+    query.execute();
+
+
+    // Req 4 
+    // database.performMaintenance(MaintenanceType.compact);
+
+    // Req 19
+    Database.log.console.level = LogLevel.verbose;
+
+    Database.log.file.config = LogFileConfiguration(
+      directory: 'logs',
+      maxRotateCount: 10,
+      maxSize: 10 * 1024 * 1024,
+    );
+
+    // Req 16
+    // It just releases the thread for other operations while it waits for something (such as IO or DB) to finish.
+    //database = await Database.openAsync(widget.channel);
+
+    // Req 15
     chatMessages = await database.createCollection('message', 'chat');
+
+    // Req 9
+    // This index speeds up queries, among others, that filter documents by an
+    // exact `type` and sort by `createdAt`.
+    await chatMessages.createIndex(
+      'type+createdAt',
+      ValueIndex([
+        ValueIndexItem.property('type'),
+        ValueIndexItem.property('createdAt'),
+      ]),
+    );
+
+    // Req 10
+
+    // Get specific document
+    //chatMessages.document('');
+
+    // Req 2
+    chatMessages.documentChanges('').listen((change) {
+      print('Document change: ${change.collection.count}');
+    });
 
     // update this with your device ip
     final targetURL = Uri.parse('ws://192.168.0.116:4984/examplechat');
 
     final targetEndpoint = UrlEndpoint(targetURL);
 
+    // Req 20
     final config = ReplicatorConfiguration(target: targetEndpoint);
 
     config.replicatorType = ReplicatorType.pushAndPull;
@@ -46,12 +110,34 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
     config.authenticator = BasicAuthenticator(
         username: widget.username, password: widget.password);
 
+    // Req 1
+    final conflict = ConflictResolver.from((conflict) =>  conflict.remoteDocument);
+
     config.addCollection(
-        chatMessages, CollectionConfiguration(channels: [widget.channel]));
+        chatMessages, CollectionConfiguration(channels: [widget.channel], conflictResolver: conflict));
 
     replicator = await Replicator.create(config);
 
-    replicator.addChangeListener((change) {
+    // Req 28
+    // await replicator.status;
+
+    // Req 22
+    // replicator = await Replicator.createAsync(config);
+    
+    // Req 21
+    // replicator = await Replicator.createSync(config);
+
+    // This is an alternative stream based API for the [addChangeListener] API.
+    // replicator.changes().listen((change) {
+    //   if (change.status.activity == ReplicatorActivityLevel.stopped) {
+    //     print('Replication stopped');
+    //   } else {
+    //     print('Replicator is currently: ${change.status.activity.name}');
+    //   }
+    // });
+    
+   token = await replicator.addChangeListener((change) {
+    
       if (change.status.activity == ReplicatorActivityLevel.stopped) {
         print('Replication stopped');
       } else {
@@ -59,7 +145,11 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
       }
     });
 
+    // Req 25
     await replicator.start();
+
+    // Req 11
+    // await database.close();
 
     chatMessageRepository = ChatMessageRepository(database, chatMessages, widget.channel);
 
@@ -76,6 +166,8 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
               : ChatMessagesPageMobile(
                   channel: widget.channel,
                   repository: snapshot.data,
+                  replicator: replicator,
+                  token: token,
                 )),
     );
   }
@@ -83,9 +175,11 @@ class _ChatMessagesPageState extends State<ChatMessagesPage> {
 
 class ChatMessagesPageMobile extends StatefulWidget {
   const ChatMessagesPageMobile(
-      {required this.channel, this.repository, super.key});
+      {required this.channel, this.repository, this.replicator, this.token, super.key});
   final ChatMessageRepository? repository;
   final String channel;
+  final Replicator? replicator;
+  final ListenerToken? token;
 
   @override
   State<ChatMessagesPageMobile> createState() => _ChatMessagesPageMobileState();
@@ -108,6 +202,12 @@ class _ChatMessagesPageMobileState extends State<ChatMessagesPageMobile> {
   @override
   void dispose() {
     _chatMessagesSub.cancel();
+
+    // Req 26
+    widget.replicator?.stop();
+    
+    // Req 24
+    widget.replicator?.removeChangeListener(widget.token!);
     super.dispose();
   }
 
@@ -142,16 +242,21 @@ class ChatMessageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              DateFormat.yMd().add_jm().format(chatMessage.createdAt),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 5),
-            Text(chatMessage.chatMessage.toString())
-          ],
+        child: GestureDetector(
+          onTap: () {
+            
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                DateFormat.yMd().add_jm().format(chatMessage.createdAt),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 5),
+              Text(chatMessage.chatMessage.toString())
+            ],
+          ),
         ),
       );
 }
@@ -255,11 +360,14 @@ class ChatMessageRepository {
       'userId': channel,
       'chatMessage': message,
     });
+
+    // Req 3
     await collection.saveDocument(doc);
     return CblChatMessage(doc);
   }
 
   Stream<List<ChatMessage>> allChatMessagesStream() {
+    // Req 6
     final query = const QueryBuilder()
         .select(
           SelectResult.expression(Meta.id),
