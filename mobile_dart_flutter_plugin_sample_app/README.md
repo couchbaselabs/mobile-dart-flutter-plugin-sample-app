@@ -30,3 +30,5 @@ flutter run -d chrome --web-browser-flag "--disable-web-security"
 ```
 
 This command ensures the smooth operation of the web application by temporarily deactivating CORS, allowing for a comprehensive testing environment. Adjust the command as needed based on your specific testing requirements.
+
+push from john hilgedick
